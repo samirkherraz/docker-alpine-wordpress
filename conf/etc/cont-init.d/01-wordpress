@@ -35,8 +35,7 @@ install(){
 
 config(){
 
-    INSTALLED=$( run_wp $(echo 'wp core is-installed') | grep Error )
-    if [ -z "$INSTALLED" ]; 
+    if [ $( run_wp $(echo 'wp core is-installed') ) ]; 
     then
         echo "Already Installed"
     else
