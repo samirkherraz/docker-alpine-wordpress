@@ -1,0 +1,72 @@
+#!/usr/bin/with-contenv sh
+
+
+
+run_wp(){
+  
+  eval "su - nginx -s /bin/ash -c 'cd /var/www/wordpress/ && "$@"'" 
+  return $? 
+}
+
+
+install(){
+
+    if [ -z "$(ls -A "/var/www/wordpress/index.php")" ]; 
+    then 
+      if [ ! -d /var/www/wordpress ]; 
+      then 
+        mkdir /var/www/wordpress 
+      fi 
+
+      chown nginx:nginx  /var/www/wordpress -R
+
+      cd /var/www/wordpress 
+      run_wp wp core download
+
+    fi
+
+    chown nginx:nginx /var/www/wordpress -R
+    return 0
+
+}
+
+
+
+config(){
+
+    INSTALLED=$( run_wp $(echo 'wp core is-installed') | grep Error )
+    if [ -z "$INSTALLED" ]; 
+    then
+        echo "Already Installed"
+    else
+
+        while ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
+        do
+            sleep 1
+        done
+
+        run_wp wp core config --dbhost=${DATABASE_HOST}  --dbname=${DATABASE_NAME} --dbuser=${DATABASE_USERNAME} --dbpass=${DATABASE_PASSWORD}
+        run_wp $( echo 'wp core install --url="'$TRUSTED_DOMAIN'" --title="'$SITENAME'" --admin_user="'$ADMIN_USERNAME'" --admin_password="'$ADMIN_PASSWORD'" --admin_email="'$ADMIN_EMAIL'"' )
+
+    fi 
+
+    return 0
+    
+}
+
+fail(){
+
+  echo "1" > /tmp/wordpress
+
+}
+
+success(){
+
+  echo "0" > /tmp/wordpress
+
+}
+
+
+
+
+install  &&  config && success || fail

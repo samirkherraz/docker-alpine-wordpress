@@ -1,0 +1,10 @@
+#!/bin/sh
+
+
+run_wp(){
+  
+  eval "su - nginx -s /bin/ash -c 'cd /var/www/wordpress/ && "$@"'" 
+  return $? 
+}
+
+run_wp wp cron
