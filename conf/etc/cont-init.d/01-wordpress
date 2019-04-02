@@ -10,23 +10,25 @@ run_wp(){
 
 
 install(){
-
+    echo "> Install"
     if [ -z "$(ls -A "/var/www/wordpress/index.php")" ]; 
     then 
       if [ ! -d /var/www/wordpress ]; 
       then 
         mkdir /var/www/wordpress 
       fi 
-
+      echo ">>> Not Installed"
       chown nginx:nginx  /var/www/wordpress -R
 
       cd /var/www/wordpress 
+      echo ">>> Download"
       run_wp wp core download
+      echo ">>> Configure"
       run_wp wp core config --dbprefix='wpi_' --dbhost=${DATABASE_HOST}  --dbname=${DATABASE_NAME} --dbuser=${DATABASE_USERNAME} --dbpass=${DATABASE_PASSWORD}
      
 
     fi
-
+    echo ">>> Fix Permissions"
     chown nginx:nginx /var/www/wordpress -R
     return 0
 
@@ -35,17 +37,19 @@ install(){
 
 
 config(){
+    echo "> Config"
 
     if [ $( run_wp $(echo 'wp core is-installed') ) ]; 
     then
-        echo "Already Installed"
+        echo ">>> Already Configured"
     else
-
+        echo ">>> Waiting for database to be ready"
         while ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
         do
             sleep 1
         done
-
+        echo ">>> Database ready"
+        echo ">>> Configuring"
         run_wp $( echo 'wp core install --url="'$TRUSTED_DOMAIN'" --title="'$SITENAME'" --admin_user="'$ADMIN_USERNAME'" --admin_password="'$ADMIN_PASSWORD'" --admin_email="'$ADMIN_EMAIL'"' )
 
     fi 
@@ -57,6 +61,7 @@ config(){
 
 
 fix_https(){
+    echo "> Fix HTTPS Behind reverse proxy"
     grep -v "//HTTPSFIX" /var/www/wordpress/wp-config.php > temp && mv temp /var/www/wordpress/wp-config.php
     grep -v "wp-settings.php" /var/www/wordpress/wp-config.php > temp && mv temp /var/www/wordpress/wp-config.php
 
@@ -70,15 +75,15 @@ fix_https(){
 
 
 fail(){
-
+  echo "[ Failed ]"
   echo "1" > /tmp/wordpress
-
+  return 1
 }
 
 success(){
-
+  echo "[ Success ]"
   echo "0" > /tmp/wordpress
-
+  return 0
 }
 
 
