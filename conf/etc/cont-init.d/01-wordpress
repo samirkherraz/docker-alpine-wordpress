@@ -23,6 +23,7 @@ install(){
       cd /var/www/wordpress 
       run_wp wp core download
       run_wp wp core config --dbhost=${DATABASE_HOST}  --dbname=${DATABASE_NAME} --dbuser=${DATABASE_USERNAME} --dbpass=${DATABASE_PASSWORD}
+     
 
     fi
 
@@ -53,6 +54,18 @@ config(){
     
 }
 
+
+
+fix_https(){
+    grep -v "//HTTPSFIX" /var/www/wordpress/wp-config.php > temp && mv temp /var/www/wordpress/wp-config.php
+    echo 'if($_SERVER["HTTP_X_FORWARDED_PROTO"] == "https"){ //HTTPSFIX' >> /var/www/wordpress/wp-config.php
+    echo '        $_SERVER["HTTPS"] = "on"; //HTTPSFIX'  >> /var/www/wordpress/wp-config.php
+    echo '        $_SERVER["SERVER_PORT"] = 443; //HTTPSFIX'  >> /var/www/wordpress/wp-config.php
+    echo '} //HTTPSFIX'  >> /var/www/wordpress/wp-config.php
+    return 0
+}
+
+
 fail(){
 
   echo "1" > /tmp/wordpress
@@ -68,4 +81,4 @@ success(){
 
 
 
-install  &&  config && success || fail
+install  &&  config && fix_https && success || fail
