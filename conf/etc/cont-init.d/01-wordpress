@@ -22,7 +22,7 @@ install(){
 
       cd /var/www/wordpress 
       run_wp wp core download
-      run_wp wp core config --dbhost=${DATABASE_HOST}  --dbname=${DATABASE_NAME} --dbuser=${DATABASE_USERNAME} --dbpass=${DATABASE_PASSWORD}
+      run_wp wp core config --dbprefix='wpi_' --dbhost=${DATABASE_HOST}  --dbname=${DATABASE_NAME} --dbuser=${DATABASE_USERNAME} --dbpass=${DATABASE_PASSWORD}
      
 
     fi
